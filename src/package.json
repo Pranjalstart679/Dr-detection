@@ -1,0 +1,29 @@
+{
+  "name": "dr-screening-assistant",
+  "version": "1.0.0",
+  "description": "AI-Powered Diabetic Retinopathy Screening Assistant",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "react": "^18",
+    "react-dom": "^18",
+    "lucide-react": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "tailwind-merge": "latest",
+    "sonner": "2.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4",
+    "typescript": "^5",
+    "vite": "^5",
+    "tailwindcss": "^4.0"
+  }
+}
