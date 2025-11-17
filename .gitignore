@@ -1,0 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Machine Learning Models (except tracked by LFS)
+# *.h5
+# *.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.pb
+*.tflite
+
+# Datasets and Large Files
+**/train_images/
+**/test_images/
+**/balanced_train_images/
+**/Data/
+**/sample/
+**/sampleimages/
+*.csv
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Logs and Checkpoints
+*.log
+*.txt
+last_epoch.txt
+*history.txt
+resume_checkpoint.h5
+logs/
+checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+Trash/
+
+# OS files
+Thumbs.db
+.DS_Store
