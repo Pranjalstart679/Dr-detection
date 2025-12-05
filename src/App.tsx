@@ -4,7 +4,6 @@ import { Dashboard } from './components/Dashboard';
 import { PatientForm } from './components/PatientForm';
 import { ScreeningWorkflow } from './components/ScreeningWorkflow';
 import { ReportView } from './components/ReportView';
-import { createClient } from './utils/supabase/client';
 import { Toaster } from './components/ui/sonner';
 import type { Patient, Prediction } from './utils/types';
 
@@ -21,22 +20,27 @@ export default function App() {
     checkSession();
   }, []);
 
-  const checkSession = async () => {
+  const checkSession = () => {
     try {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setAccessToken(session.access_token);
-        setUser(session.user);
+      const token = localStorage.getItem('accessToken');
+      const userData = localStorage.getItem('user');
+
+      if (token && userData) {
+        setAccessToken(token);
+        setUser(JSON.parse(userData));
         setCurrentScreen('dashboard');
       }
     } catch (error) {
       console.error('Error checking session:', error);
+      // Clear potentially corrupted data
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
     }
   };
 
   const handleLogin = (token: string, userData: any) => {
+    localStorage.setItem('accessToken', token);
+    localStorage.setItem('user', JSON.stringify(userData));
     setAccessToken(token);
     setUser(userData);
     setCurrentScreen('dashboard');
@@ -44,8 +48,8 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
       setAccessToken(null);
       setUser(null);
       setSelectedPatient(null);

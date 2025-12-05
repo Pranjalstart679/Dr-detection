@@ -188,17 +188,61 @@ For questions or concerns, please consult with an ophthalmologist or retinal spe
             {/* Results */}
             <div>
               <h3 className="text-gray-900 mb-3">Analysis Results</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Detected Stage</p>
-                  <div className={`inline-block px-4 py-2 rounded-lg ${getSeverityColor(prediction.stage)}`}>
-                    <span className="text-lg">{prediction.stage}</span>
+
+              {/* Binary Classification */}
+              {prediction.binaryClass && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Binary Classification</h4>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-lg font-semibold ${prediction.binaryClass.includes('Normal') ? 'text-green-700' : 'text-red-700'}`}>
+                      {prediction.binaryClass}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      Confidence: {((prediction.binaryConfidence || 0) * 100).toFixed(1)}%
+                    </span>
                   </div>
                 </div>
+              )}
+
+              <div className="space-y-6">
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">Confidence Score</p>
-                  <p className="text-2xl text-gray-900">{(prediction.confidence * 100).toFixed(1)}%</p>
+                  <p className="text-sm text-gray-600 mb-2">Detailed Stage Assessment</p>
+                  <div className={`inline-block px-4 py-2 rounded-lg ${getSeverityColor(prediction.stage)}`}>
+                    <span className="text-lg font-medium">{prediction.stage}</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Confidence: {(prediction.confidence * 100).toFixed(1)}%
+                  </p>
                 </div>
+
+                {/* Probability Breakdown */}
+                {prediction.probabilities && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-3">Class Probability Breakdown</p>
+                    <div className="space-y-3">
+                      {['No DR', 'Mild DR', 'Moderate DR', 'Severe DR', 'Proliferative DR'].map((label, index) => {
+                        const prob = (prediction.probabilities?.[index] || 0) * 100;
+                        const isHighest = index === ['No DR', 'Mild DR', 'Moderate DR', 'Severe DR', 'Proliferative DR'].indexOf(prediction.stage);
+                        return (
+                          <div key={label} className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className={`font-medium ${isHighest ? 'text-blue-700' : 'text-gray-600'}`}>
+                                {label}
+                              </span>
+                              <span className="text-gray-500">{prob.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${isHighest ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                style={{ width: `${prob}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

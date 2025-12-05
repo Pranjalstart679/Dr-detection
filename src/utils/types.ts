@@ -24,6 +24,9 @@ export interface Prediction {
   confidence: number;
   recommendation: string;
   createdAt: string;
+  binaryClass?: string;
+  binaryConfidence?: number;
+  probabilities?: number[];
 }
 
 export interface User {

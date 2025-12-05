@@ -70,7 +70,17 @@ def init_db():
                   diabetesType TEXT, createdAt TEXT, lastScreening TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS predictions 
                  (id TEXT PRIMARY KEY, patientId TEXT, userId TEXT, imageUrl TEXT, 
-                  stage TEXT, confidence REAL, recommendation TEXT, createdAt TEXT)''')
+                  stage TEXT, confidence REAL, recommendation TEXT, createdAt TEXT,
+                  binaryClass TEXT, binaryConfidence REAL, probabilities TEXT)''')
+    
+    # Migration: Add new columns if they don't exist
+    try:
+        c.execute('ALTER TABLE predictions ADD COLUMN binaryClass TEXT')
+        c.execute('ALTER TABLE predictions ADD COLUMN binaryConfidence REAL')
+        c.execute('ALTER TABLE predictions ADD COLUMN probabilities TEXT')
+    except sqlite3.OperationalError:
+        pass # Columns likely exist
+
     conn.commit()
     conn.close()
 
@@ -178,34 +188,50 @@ def upload_image():
         stage = "No DR"
         confidence = 0.0
         recommendation = "Routine follow-up in 12 months."
+        binary_class = "Normal"
+        binary_confidence = 0.0
+        probabilities = [0.0] * 5
         
         # Lazy load model
         global model
         if model is None:
+            print("Loading model for the first time... This may take a while.")
             load_model()
+            print("Model loaded successfully.")
 
         
         if model:
             try:
+                print(f"Processing image: {filename}")
                 # Load and preprocess image
                 img = tf.keras.utils.load_img(file_path, target_size=(224, 224))
                 img_array = tf.keras.utils.img_to_array(img)
                 img_array = np.expand_dims(img_array, axis=0)
                 img_array = img_array / 255.0  # Normalize
                 
+                print("Running prediction...")
                 # Predict
-                predictions = model.predict(img_array, verbose=0)
-                predicted_class = np.argmax(predictions[0])
-                confidence = float(np.max(predictions[0]))
+                preds = model.predict(img_array, verbose=0)
+                print("Prediction complete.")
+                predictions = preds[0]
+                predicted_class = np.argmax(predictions)
+                confidence = float(np.max(predictions))
+                probabilities = [float(p) for p in predictions]
                 
                 # Binary classification logic
-                normal_prob = predictions[0][0]
-                abnormal_prob = np.sum(predictions[0][1:])
-                binary_class = 0 if normal_prob > abnormal_prob else 1
+                normal_prob = predictions[0]
+                abnormal_prob = np.sum(predictions[1:])
+                
+                if normal_prob > abnormal_prob:
+                    binary_class = "Normal (No DR)"
+                    binary_confidence = float(normal_prob)
+                else:
+                    binary_class = "Abnormal (DR Detected)"
+                    binary_confidence = float(abnormal_prob)
                 
                 stage = CLASS_LABELS[predicted_class]
                 
-                if binary_class == 0:
+                if predicted_class == 0:
                     recommendation = "Routine follow-up in 12 months."
                 else:
                     recommendation = "Consult with an ophthalmologist for proper diagnosis."
@@ -220,10 +246,13 @@ def upload_image():
         prediction_id = str(uuid.uuid4())
         created_at = datetime.now().isoformat()
         
+        import json
+        probs_json = json.dumps(probabilities)
+        
         conn = get_db()
-        conn.execute('''INSERT INTO predictions (id, patientId, userId, imageUrl, stage, confidence, recommendation, createdAt)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                     (prediction_id, patient_id, token, image_url, stage, confidence, recommendation, created_at))
+        conn.execute('''INSERT INTO predictions (id, patientId, userId, imageUrl, stage, confidence, recommendation, createdAt, binaryClass, binaryConfidence, probabilities)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                     (prediction_id, patient_id, token, image_url, stage, confidence, recommendation, created_at, binary_class, binary_confidence, probs_json))
         
         # Update patient last screening
         conn.execute('UPDATE patients SET lastScreening = ? WHERE id = ?', (created_at, patient_id))
@@ -231,7 +260,9 @@ def upload_image():
         conn.close()
         
         return jsonify({'prediction': {'id': prediction_id, 'stage': stage, 'confidence': confidence, 
-                                       'recommendation': recommendation, 'imageUrl': image_url}})
+                                       'recommendation': recommendation, 'imageUrl': image_url,
+                                       'binaryClass': binary_class, 'binaryConfidence': binary_confidence,
+                                       'probabilities': probabilities}})
 
 @app.route('/predictions/<patient_id>', methods=['GET'])
 def get_predictions(patient_id):
