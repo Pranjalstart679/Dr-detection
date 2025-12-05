@@ -4,9 +4,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Eye, EyeIcon, Activity } from 'lucide-react';
-import { createClient } from '../utils/supabase/client';
-import { signup } from '../utils/api';
+import { Activity } from 'lucide-react';
+import { signup, login } from '../utils/api';
 import { toast } from 'sonner@2.0.3';
 
 interface AuthPageProps {
@@ -30,24 +29,12 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.session) {
-        toast.success('Login successful');
-        onLogin(data.session.access_token, data.user);
-      }
-    } catch (error) {
+      const data = await login(loginEmail, loginPassword);
+      toast.success('Login successful');
+      onLogin(data.token, data.user);
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('An error occurred during login');
+      toast.error(error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -58,24 +45,9 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     setIsLoading(true);
 
     try {
-      await signup(signupEmail, signupPassword, signupName);
-      
-      // Auto-login after signup
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: signupEmail,
-        password: signupPassword,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.session) {
-        toast.success('Account created successfully');
-        onLogin(data.session.access_token, data.user);
-      }
+      const data = await signup(signupEmail, signupPassword, signupName);
+      toast.success('Account created successfully');
+      onLogin(data.token, data.user);
     } catch (error: any) {
       console.error('Signup error:', error);
       toast.error(error.message || 'An error occurred during signup');

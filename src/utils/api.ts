@@ -1,14 +1,13 @@
-import { projectId, publicAnonKey } from './supabase/info';
 import type { Patient, Prediction } from './types';
 
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b925e7ef`;
+// Point to the local Python backend
+const API_BASE = 'http://localhost:5000';
 
 export async function signup(email: string, password: string, name: string) {
   const response = await fetch(`${API_BASE}/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${publicAnonKey}`,
     },
     body: JSON.stringify({ email, password, name }),
   });
@@ -16,6 +15,22 @@ export async function signup(email: string, password: string, name: string) {
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.error || 'Signup failed');
+  }
+  return data;
+}
+
+export async function login(email: string, password: string) {
+  const response = await fetch(`${API_BASE}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Login failed');
   }
   return data;
 }
