@@ -2,6 +2,7 @@ import { projectId, publicAnonKey } from './supabase/info';
 import type { Patient, Prediction } from './types';
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-b925e7ef`;
+const ML_API_BASE = 'http://localhost:8000';
 
 export async function signup(email: string, password: string, name: string) {
   const response = await fetch(`${API_BASE}/signup`, {
@@ -56,22 +57,30 @@ export async function createPatient(accessToken: string, patientData: Partial<Pa
 export async function uploadImage(accessToken: string, patientId: string, imageFile: File): Promise<Prediction> {
   const formData = new FormData();
   formData.append('image', imageFile);
-  formData.append('patientId', patientId);
-
-  const response = await fetch(`${API_BASE}/upload-image`, {
+  
+  // Call local FastAPI model
+  const response = await fetch(`${ML_API_BASE}/predict`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-    },
     body: formData,
   });
 
   const data = await response.json();
+  
   if (!response.ok) {
-    console.error('Error uploading image:', data.error);
-    throw new Error(data.error || 'Failed to upload image');
+    console.error('Error uploading image:', data.detail);
+    throw new Error(data.detail || 'Failed to upload image');
   }
-  return data.prediction;
+
+  // Return a Prediction object compatible with the frontend
+  return {
+    id: 'temp-' + Date.now(),
+    patientId: patientId,
+    imageUrl: '', // We don't have a persistent URL from the local API yet
+    prediction: data.prediction,
+    confidence: data.confidence,
+    createdAt: new Date().toISOString(),
+    status: 'completed'
+  };
 }
 
 export async function getPredictions(accessToken: string, patientId: string): Promise<Prediction[]> {
