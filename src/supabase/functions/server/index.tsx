@@ -36,6 +36,39 @@ if (!bucketExists) {
   console.log(`Created bucket: ${bucketName}`);
 }
 
+// Get ML API URL from environment variable
+const ML_API_URL = Deno.env.get('ML_API_URL') || '';
+
+// Function to call ML API for prediction
+async function callMLAPI(imageBuffer: ArrayBuffer, contentType: string) {
+  if (!ML_API_URL) {
+    throw new Error('ML_API_URL not configured');
+  }
+
+  const formData = new FormData();
+  const blob = new Blob([imageBuffer], { type: contentType });
+  formData.append('image', blob, 'fundus.jpg');
+
+  const response = await fetch(`${ML_API_URL}/predict`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`ML API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  
+  // Map ML API response to our format
+  return {
+    stage: data.stage_label || data.stage,
+    confidence: data.confidence,
+    recommendation: data.recommendation,
+  };
+}
+
 // Health check endpoint
 app.get("/make-server-b925e7ef/health", (c) => {
   return c.json({ status: "ok" });
@@ -152,8 +185,16 @@ app.post("/make-server-b925e7ef/upload-image", async (c) => {
       .from(bucketName)
       .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
-    // Mock ML prediction (replace with actual ML API call)
-    const mockPrediction = generateMockPrediction();
+    // Call actual ML API for prediction
+    let mlPrediction;
+    try {
+      mlPrediction = await callMLAPI(arrayBuffer, file.type);
+    } catch (mlError) {
+      console.log('ML API error, falling back to mock:', mlError);
+      // Fallback to mock if ML API fails
+      mlPrediction = generateMockPrediction();
+      mlPrediction.isMock = true;
+    }
 
     // Store prediction result
     const predictionId = crypto.randomUUID();
@@ -163,9 +204,10 @@ app.post("/make-server-b925e7ef/upload-image", async (c) => {
       userId: user.id,
       imageUrl: signedUrlData?.signedUrl,
       imagePath: fileName,
-      stage: mockPrediction.stage,
-      confidence: mockPrediction.confidence,
-      recommendation: mockPrediction.recommendation,
+      stage: mlPrediction.stage,
+      confidence: mlPrediction.confidence,
+      recommendation: mlPrediction.recommendation,
+      isMock: mlPrediction.isMock || false,
       createdAt: new Date().toISOString(),
     };
 
