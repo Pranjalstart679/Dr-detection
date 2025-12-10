@@ -79,7 +79,38 @@ Before starting, ensure you have:
 
 ---
 
-### Step 2: Set Up Frontend Locally (5 minutes)
+### Step 2: Test ML Service (5 minutes) ⭐ DO THIS FIRST
+
+Before setting up the full application, let's verify your ML service works:
+
+1. **Keep ML service running** (from Step 1)
+
+2. **Open a NEW terminal and test:**
+   ```bash
+   # Test health endpoint
+   curl http://localhost:5000/health
+   # Should return: {"status":"ok","model_loaded":true}
+   ```
+
+3. **Test with an image (recommended):**
+   ```bash
+   cd ml-service
+   venv\Scripts\Activate.ps1  # Windows
+   # source venv/bin/activate  # Mac/Linux
+   
+   # Run test script with your fundus image
+   python test_ml_service.py path\to\fundus_image.jpg
+   ```
+
+✅ **If tests pass, your ML service is ready!** You can now proceed to set up the frontend and Supabase.
+
+⚠️ **Important:** The frontend requires Supabase to work. You cannot test the full application until Steps 3-6 are complete.
+
+---
+
+### Step 2b: Set Up Frontend (Optional - for later)
+
+You can install frontend dependencies now, but **the app won't work until Supabase is configured** (Steps 3-6):
 
 1. **Open a new terminal and navigate to project root:**
    ```bash
@@ -93,18 +124,9 @@ Before starting, ensure you have:
    pnpm install
    ```
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   # or
-   pnpm dev
-   ```
+3. **DON'T start the frontend yet** - it won't work without Supabase configuration
 
-4. **Open your browser:**
-   - Go to `http://localhost:5173` (or the URL shown in terminal)
-   - You should see the login/signup page
-
-⚠️ **Note:** The frontend won't fully work yet because we need to set up Supabase backend.
+⚠️ **Note:** The frontend connects to Supabase Edge Functions, which you'll deploy in Step 4. Without Supabase, the frontend cannot function.
 
 ---
 
