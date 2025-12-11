@@ -1,4 +1,3 @@
-cd ml-service
 
 # Create virtual environment
 python -m venv venv
