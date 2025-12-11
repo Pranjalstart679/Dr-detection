@@ -1,7 +1,6 @@
-tensorflow-cpu==2.15.0  # or whatever TF version you trained with
-gunicorn==21.2.0
-
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-python-multipart==0.0.12
-pillow==11.0.0
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+tensorflow==2.18.0
+pillow==10.1.0
+python-multipart==0.0.6
+numpy==1.26.4
