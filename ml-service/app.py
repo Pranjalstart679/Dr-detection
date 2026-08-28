@@ -90,21 +90,6 @@ async def predict(image: UploadFile = File(...)):
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
-    # Hardcoded filenames that should always return "No DR" with 100% confidence
-    FIXED_NO_DR_FILENAMES = [
-        "dog.jpg",
-        # Add more filenames here as needed
-    ]
-    
-    # Check if this is a fixed filename
-    if image.filename and image.filename.lower() in [f.lower() for f in FIXED_NO_DR_FILENAMES]:
-        return PredictionResponse(
-            stage_index=0,
-            stage_label="No DR",
-            confidence=1.0,
-            recommendation="No DR detected. Regular annual screening recommended.",
-        )
-
     # Read image bytes
     image_bytes = await image.read()
 

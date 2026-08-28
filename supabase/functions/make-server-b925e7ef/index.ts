@@ -190,10 +190,8 @@ app.post("/make-server-b925e7ef/upload-image", async (c) => {
     try {
       mlPrediction = await callMLAPI(arrayBuffer, file.type);
     } catch (mlError) {
-      console.log('ML API error, falling back to mock:', mlError);
-      // Fallback to mock if ML API fails
-      mlPrediction = generateMockPrediction();
-      mlPrediction.isMock = true;
+      console.log('ML API error:', mlError);
+      return c.json({ error: 'ML service error: Failed to process image prediction. Ensure ML service is running.' }, 500);
     }
 
     // Store prediction result
@@ -258,19 +256,5 @@ app.get("/make-server-b925e7ef/predictions/:patientId", async (c) => {
     return c.json({ error: 'Failed to fetch predictions' }, 500);
   }
 });
-
-// Helper function to generate mock prediction
-// This should be replaced with actual ML model API call
-function generateMockPrediction() {
-  const stages = [
-    { stage: 'No DR', confidence: 0.92, recommendation: 'Continue routine annual screening. No diabetic retinopathy detected.' },
-    { stage: 'Mild DR', confidence: 0.87, recommendation: 'Schedule follow-up screening in 6-12 months. Monitor blood glucose levels closely.' },
-    { stage: 'Moderate DR', confidence: 0.84, recommendation: 'Refer to ophthalmologist within 3 months. Intensify diabetes management.' },
-    { stage: 'Severe DR', confidence: 0.91, recommendation: 'URGENT: Refer to retinal specialist within 1-2 weeks. Requires immediate attention.' },
-    { stage: 'Proliferative DR', confidence: 0.88, recommendation: 'URGENT: Immediate referral to retinal specialist (within days). High risk of vision loss.' },
-  ];
-
-  return stages[Math.floor(Math.random() * stages.length)];
-}
 
 Deno.serve(app.fetch);
